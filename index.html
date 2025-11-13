@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nokia Snake</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="nokia-shell">
+      <div class="status-bar">
+        <span class="brand">NOKIA</span>
+        <span class="status-indicator" id="statusText">Press Enter to start</span>
+      </div>
+      <div class="screen-bezel">
+        <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
+      </div>
+      <div class="screen-info">
+        <div class="score">SCORE: <span id="scoreValue">0</span></div>
+        <div class="instructions">Press Enter to start or restart · Use arrow keys to move</div>
+      </div>
+      <div class="control-hint">
+        <div class="key">▲</div>
+        <div class="key-row">
+          <span class="key">◄</span>
+          <span class="key">▼</span>
+          <span class="key">►</span>
+        </div>
+      </div>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
