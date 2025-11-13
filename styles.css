@@ -1,0 +1,87 @@
+:root {
+  font-family: 'VT323', 'Share Tech Mono', 'Courier New', Courier, monospace;
+  color: #c4f000;
+  background-color: #0b2e13;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #163b1d, #051806 70%);
+}
+
+.game-shell {
+  background: #091f0d;
+  border: 12px solid #1d2f1a;
+  border-radius: 32px;
+  padding: 2rem;
+  width: min(520px, 90vw);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+header,
+footer {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+}
+
+.key {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+}
+
+.screen {
+  position: relative;
+  margin: 1.5rem auto;
+  width: fit-content;
+  border: 6px solid #24381f;
+  border-radius: 12px;
+  background: repeating-linear-gradient(
+      90deg,
+      rgba(5, 20, 8, 0.8) 0,
+      rgba(5, 20, 8, 0.8) 2px,
+      rgba(0, 0, 0, 0.6) 2px,
+      rgba(0, 0, 0, 0.6) 4px
+    ),
+    linear-gradient(180deg, #4d7116 0%, #0c3b05 100%);
+}
+
+canvas {
+  display: block;
+  width: 360px;
+  height: 360px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4f000;
+  font-size: 1.5rem;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
