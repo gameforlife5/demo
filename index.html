@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Snake</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Snake</h1>
+        <p>
+          Use the arrow keys (or WASD) to guide the snake. Eat fruit, avoid your tail.
+          Tap the on-screen controls if your environment blocks keyboard input.
+        </p>
+      </header>
+
+      <section class="game-wrapper">
+        <canvas id="game" width="400" height="400" aria-label="Snake game board" role="img"></canvas>
+        <div class="hud">
+          <p class="score">Score: <span id="score">0</span></p>
+          <p class="status" id="status">Press any arrow key to start</p>
+          <button id="restart" type="button">Play again</button>
+          <p class="preview-tip">
+            Preview panes (like Codex or VS Code) run inside an iframe, so browsers often block
+            arrow keys there. Use the controls below or open the preview in a new browser tab for
+            full keyboard access.
+          </p>
+          <div class="controls" aria-label="On-screen direction controls">
+            <button class="control" data-direction="up" aria-label="Move up">▲</button>
+            <div class="control-row">
+              <button class="control" data-direction="left" aria-label="Move left">◀</button>
+              <button class="control" data-direction="down" aria-label="Move down">▼</button>
+              <button class="control" data-direction="right" aria-label="Move right">▶</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="snake.js"></script>
+  </body>
+</html>
