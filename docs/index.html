@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Snake Preview — Demo</title>
+  <style>
+    :root{--bg:#0d1117;--fg:#c9d1d9;--accent:#2ea44f}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);display:flex;gap:20px;align-items:flex-start;padding:24px}
+    .wrap{display:flex;flex-direction:column;gap:12px}
+    canvas{background:#08111a;border:1px solid #222;border-radius:8px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px}
+    .controls button, .controls input[type=range]{background:#0b1220;color:var(--fg);border:1px solid #222;padding:8px;border-radius:6px}
+    .meta{max-width:360px}
+    .hint{opacity:.8;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="c" width="480" height="480"></canvas>
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="pause">Pause</button>
+      <button id="reset">Reset</button>
+      <label class="hint">Speed <input id="speed" type="range" min="1" max="15" value="6"/></label>
+      <label class="hint">Grid <input id="grid" type="range" min="8" max="32" value="16"/></label>
+      <button id="controlsToggle">Toggle Touch Controls</button>
+    </div>
+  </div>
+  <div class="meta">
+    <h2>Preview-friendly controls for Snake</h2>
+    <p class="hint">Use arrow keys or WASD. The touch controls appear when you toggle them — they're large and preview-friendly for demos and screenshots.</p>
+    <p class="hint">This single-file demo is suitable to publish to GitHub Pages at https://Daniel55926.github.io/demo/ (enable Pages -> Source: "main" / "docs" folder if not already set).</p>
+    <div id="touch" style="display:none;margin-top:12px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button data-dir="up" style="padding:18px 22px;font-size:18px">↑</button>
+        <button data-dir="left" style="padding:18px 22px;font-size:18px">←</button>
+        <button data-dir="down" style="padding:18px 22px;font-size:18px">↓</button>
+        <button data-dir="right" style="padding:18px 22px;font-size:18px">→</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let grid = 16;
+    let speed = 6;
+    let px = 10, py = 10;
+    let vx = 0, vy = 0;
+    let trail = [];
+    let tail = 5;
+    let appleX = 15, appleY = 15;
+    let running = false;
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pause');
+    const resetBtn = document.getElementById('reset');
+    const speedInput = document.getElementById('speed');
+    const gridInput = document.getElementById('grid');
+    const controlsToggle = document.getElementById('controlsToggle');
+    const touchArea = document.getElementById('touch');
+
+    function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+    function placeApple(){appleX = rnd(0, (canvas.width/grid)-1); appleY = rnd(0, (canvas.height/grid)-1)}
+
+    function gameLoop(){
+      if(!running) return;
+      for(let i=0;i<speed;i++){ 
+        px += vx; py += vy;
+        if(px<0) px = canvas.width/grid -1;
+        if(px>canvas.width/grid-1) px = 0;
+        if(py<0) py = canvas.height/grid -1;
+        if(py>canvas.height/grid-1) py = 0;
+        trail.push({x:px,y:py});
+        while(trail.length>tail) trail.shift();
+        for(let t of trail){
+          if(t.x===px && t.y===py && !(t===trail[trail.length-1])){ // collided
+            running=false; break;
+          }
+        }
+        if(px===appleX && py===appleY){ tail++; placeApple(); }
+      }
+      draw();
+      setTimeout(gameLoop, 1000/20);
+    }
+
+    function draw(){
+      ctx.fillStyle = '#08111a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // apple
+      ctx.fillStyle = '#ff4d4d'; ctx.fillRect(appleX*grid, appleY*grid, grid, grid);
+      // snake
+      ctx.fillStyle = '#2ea44f';
+      for(let s of trail) ctx.fillRect(s.x*grid+1, s.y*grid+1, grid-2, grid-2);
+      // grid overlay if small
+      if(grid<=18){ ctx.strokeStyle='rgba(255,255,255,0.02)'; ctx.lineWidth=1; for(let x=0;x<canvas.width;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()} for(let y=0;y<canvas.height;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()} }
+    }
+
+    function reset(){ px=10;py=10;vx=0;vy=0;trail=[];tail=5;placeApple(); draw(); }
+
+    document.addEventListener('keydown', e=>{
+      const k = e.key.toLowerCase();
+      if(['arrowup','w'].includes(e.key.toLowerCase())){ vx=0;vy=-1 }
+      if(['arrowdown','s'].includes(e.key.toLowerCase())){ vx=0;vy=1 }
+      if(['arrowleft','a'].includes(e.key.toLowerCase())){ vx=-1;vy=0 }
+      if(['arrowright','d'].includes(e.key.toLowerCase())){ vx=1;vy=0 }
+    });
+
+    startBtn.addEventListener('click', ()=>{ if(!running){ running=true; gameLoop(); } });
+    pauseBtn.addEventListener('click', ()=>{ running=false; });
+    resetBtn.addEventListener('click', ()=>{ running=false; reset(); });
+    speedInput.addEventListener('input', e=>{ speed = parseInt(e.target.value,10); });
+    gridInput.addEventListener('input', e=>{ grid = parseInt(e.target.value,10); });
+    controlsToggle.addEventListener('click', ()=>{ touchArea.style.display = touchArea.style.display==='none' ? 'block' : 'none' });
+
+    touchArea.addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; const dir = b.dataset.dir; if(dir==='up'){vx=0;vy=-1} if(dir==='down'){vx=0;vy=1} if(dir==='left'){vx=-1;vy=0} if(dir==='right'){vx=1;vy=0} });
+
+    // initial
+    reset();
+  </script>
+</body>
+</html>
