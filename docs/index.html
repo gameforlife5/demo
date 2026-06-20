@@ -3,118 +3,390 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Snake Preview — Demo</title>
+  <title>Snake HD — Demo</title>
   <style>
-    :root{--bg:#0d1117;--fg:#c9d1d9;--accent:#2ea44f}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);display:flex;gap:20px;align-items:flex-start;padding:24px}
-    .wrap{display:flex;flex-direction:column;gap:12px}
-    canvas{background:#08111a;border:1px solid #222;border-radius:8px}
-    .controls{display:flex;flex-wrap:wrap;gap:8px}
-    .controls button, .controls input[type=range]{background:#0b1220;color:var(--fg);border:1px solid #222;padding:8px;border-radius:6px}
-    .meta{max-width:360px}
-    .hint{opacity:.8;font-size:13px}
+    :root{
+      color-scheme:dark;
+      --bg:#050816;
+      --panel:rgba(13,21,42,.78);
+      --panel-border:rgba(148,163,184,.24);
+      --fg:#e5eefb;
+      --muted:#9fb0c8;
+      --accent:#4ade80;
+      --accent-2:#22d3ee;
+      --danger:#fb7185;
+      --gold:#facc15;
+    }
+    *{box-sizing:border-box}
+    body{
+      min-height:100vh;
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      color:var(--fg);
+      background:
+        radial-gradient(circle at 20% 20%,rgba(34,211,238,.22),transparent 28rem),
+        radial-gradient(circle at 80% 0%,rgba(74,222,128,.18),transparent 24rem),
+        linear-gradient(135deg,#030712 0%,var(--bg) 45%,#0f172a 100%);
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .shell{
+      width:min(1180px,100%);
+      display:grid;
+      grid-template-columns:minmax(320px,760px) minmax(280px,360px);
+      gap:24px;
+      align-items:start;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:24px;
+      box-shadow:0 24px 80px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter:blur(18px);
+    }
+    .game-card{padding:18px}
+    .canvas-wrap{
+      position:relative;
+      overflow:hidden;
+      border-radius:20px;
+      border:1px solid rgba(148,163,184,.18);
+      background:#020617;
+      box-shadow:inset 0 0 50px rgba(34,211,238,.08);
+    }
+    canvas{
+      display:block;
+      width:100%;
+      aspect-ratio:1/1;
+      image-rendering:auto;
+    }
+    .hud{
+      position:absolute;
+      inset:16px 16px auto 16px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      pointer-events:none;
+    }
+    .pill{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(2,6,23,.64);
+      border:1px solid rgba(148,163,184,.2);
+      color:var(--fg);
+      font-weight:700;
+      letter-spacing:.02em;
+      box-shadow:0 8px 28px rgba(0,0,0,.28);
+    }
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      text-align:center;
+      background:linear-gradient(180deg,rgba(2,6,23,.12),rgba(2,6,23,.62));
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease;
+    }
+    .overlay.visible{opacity:1;pointer-events:auto}
+    .overlay-panel{
+      max-width:440px;
+      padding:24px;
+      border-radius:22px;
+      background:rgba(2,6,23,.74);
+      border:1px solid rgba(148,163,184,.24);
+    }
+    .overlay h1{margin:0 0 8px;font-size:clamp(30px,5vw,54px);line-height:1;color:white}
+    .overlay p{margin:0;color:var(--muted)}
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:14px;
+    }
+    button,.select-row select,input[type=range]{
+      border:1px solid rgba(148,163,184,.22);
+      background:rgba(15,23,42,.84);
+      color:var(--fg);
+      border-radius:12px;
+      padding:11px 14px;
+      font:inherit;
+    }
+    button{
+      cursor:pointer;
+      font-weight:800;
+      transition:transform .14s ease,border-color .14s ease,background .14s ease;
+    }
+    button:hover{transform:translateY(-1px);border-color:rgba(74,222,128,.65)}
+    button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-color:rgba(187,247,208,.55)}
+    .side{padding:24px}
+    .side h1{margin:0 0 8px;font-size:34px}
+    .side p{color:var(--muted);line-height:1.6}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+    .stat{padding:14px;border-radius:16px;background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.16)}
+    .stat small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .stat strong{display:block;margin-top:3px;font-size:28px}
+    .settings{display:grid;gap:14px;margin-top:18px}
+    label{display:grid;gap:7px;color:var(--muted);font-size:14px}
+    input[type=range]{width:100%;accent-color:var(--accent)}
+    .touch-pad{display:grid;grid-template-columns:repeat(3,72px);gap:8px;justify-content:center;margin-top:20px}
+    .touch-pad button{min-height:58px;font-size:22px}
+    .touch-pad .blank{visibility:hidden}
+    .hint{font-size:13px;color:var(--muted)}
+    @media (max-width:900px){
+      body{padding:14px}.shell{grid-template-columns:1fr}.side{order:-1}.controls{grid-template-columns:1fr 1fr}.touch-pad{display:grid}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <canvas id="c" width="480" height="480"></canvas>
-    <div class="controls">
-      <button id="start">Start</button>
-      <button id="pause">Pause</button>
-      <button id="reset">Reset</button>
-      <label class="hint">Speed <input id="speed" type="range" min="1" max="15" value="6"/></label>
-      <label class="hint">Grid <input id="grid" type="range" min="8" max="32" value="16"/></label>
-      <button id="controlsToggle">Toggle Touch Controls</button>
-    </div>
-  </div>
-  <div class="meta">
-    <h2>Preview-friendly controls for Snake</h2>
-    <p class="hint">Use arrow keys or WASD. The touch controls appear when you toggle them — they're large and preview-friendly for demos and screenshots.</p>
-    <p class="hint">This single-file demo is suitable to publish to GitHub Pages at https://Daniel55926.github.io/demo/ (enable Pages -> Source: "main" / "docs" folder if not already set).</p>
-    <div id="touch" style="display:none;margin-top:12px;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button data-dir="up" style="padding:18px 22px;font-size:18px">↑</button>
-        <button data-dir="left" style="padding:18px 22px;font-size:18px">←</button>
-        <button data-dir="down" style="padding:18px 22px;font-size:18px">↓</button>
-        <button data-dir="right" style="padding:18px 22px;font-size:18px">→</button>
+  <main class="shell">
+    <section class="card game-card" aria-label="Snake game">
+      <div class="canvas-wrap">
+        <canvas id="game" width="960" height="960"></canvas>
+        <div class="hud">
+          <div class="pill">Score <span id="scoreHud">0</span></div>
+          <div class="pill">Best <span id="bestHud">0</span></div>
+        </div>
+        <div id="overlay" class="overlay visible">
+          <div class="overlay-panel">
+            <h1>Snake HD</h1>
+            <p id="overlayText">Press Start, Space, or an arrow key to begin.</p>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+      <div class="controls">
+        <button id="start" class="primary">Start</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+      </div>
+    </section>
+
+    <aside class="card side">
+      <h1>Snake HD</h1>
+      <p>A sharper, high-resolution canvas version of the classic Snake game with glow effects, score tracking, difficulty controls, and mobile-friendly input.</p>
+      <div class="stats">
+        <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+        <div class="stat"><small>Best</small><strong id="best">0</strong></div>
+      </div>
+      <div class="settings">
+        <label>Speed: <span id="speedValue">7</span>
+          <input id="speed" type="range" min="4" max="14" value="7" />
+        </label>
+        <label>Board size: <span id="boardValue">30 × 30</span>
+          <input id="board" type="range" min="18" max="40" value="30" />
+        </label>
+      </div>
+      <div class="touch-pad" aria-label="Touch controls">
+        <button class="blank" tabindex="-1"> </button><button data-dir="up">↑</button><button class="blank" tabindex="-1"> </button>
+        <button data-dir="left">←</button><button data-dir="down">↓</button><button data-dir="right">→</button>
+      </div>
+      <p class="hint">Controls: arrow keys, WASD, Space to start/pause, or the on-screen buttons. Eat gold orbs, avoid your own neon trail.</p>
+    </aside>
+  </main>
 
   <script>
-    const canvas = document.getElementById('c');
+    const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    let grid = 16;
-    let speed = 6;
-    let px = 10, py = 10;
-    let vx = 0, vy = 0;
-    let trail = [];
-    let tail = 5;
-    let appleX = 15, appleY = 15;
-    let running = false;
-    const startBtn = document.getElementById('start');
-    const pauseBtn = document.getElementById('pause');
-    const resetBtn = document.getElementById('reset');
+    const scoreEls = [document.getElementById('score'), document.getElementById('scoreHud')];
+    const bestEls = [document.getElementById('best'), document.getElementById('bestHud')];
     const speedInput = document.getElementById('speed');
-    const gridInput = document.getElementById('grid');
-    const controlsToggle = document.getElementById('controlsToggle');
-    const touchArea = document.getElementById('touch');
+    const boardInput = document.getElementById('board');
+    const speedValue = document.getElementById('speedValue');
+    const boardValue = document.getElementById('boardValue');
+    const overlay = document.getElementById('overlay');
+    const overlayText = document.getElementById('overlayText');
 
-    function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-    function placeApple(){appleX = rnd(0, (canvas.width/grid)-1); appleY = rnd(0, (canvas.height/grid)-1)}
+    const state = {
+      board: 30,
+      speed: 7,
+      snake: [],
+      direction: {x: 1, y: 0},
+      nextDirection: {x: 1, y: 0},
+      apple: {x: 22, y: 15},
+      score: 0,
+      best: Number(localStorage.getItem('snake-hd-best') || 0),
+      running: false,
+      gameOver: false,
+      lastTime: 0,
+      accumulator: 0
+    };
 
-    function gameLoop(){
-      if(!running) return;
-      for(let i=0;i<speed;i++){ 
-        px += vx; py += vy;
-        if(px<0) px = canvas.width/grid -1;
-        if(px>canvas.width/grid-1) px = 0;
-        if(py<0) py = canvas.height/grid -1;
-        if(py>canvas.height/grid-1) py = 0;
-        trail.push({x:px,y:py});
-        while(trail.length>tail) trail.shift();
-        for(let t of trail){
-          if(t.x===px && t.y===py && !(t===trail[trail.length-1])){ // collided
-            running=false; break;
-          }
-        }
-        if(px===appleX && py===appleY){ tail++; placeApple(); }
-      }
+    function cellSize(){ return canvas.width / state.board; }
+    function center(){ return Math.floor(state.board / 2); }
+    function sameCell(a,b){ return a.x === b.x && a.y === b.y; }
+    function randomCell(){ return {x: Math.floor(Math.random() * state.board), y: Math.floor(Math.random() * state.board)}; }
+
+    function updateText(){
+      scoreEls.forEach(el => { el.textContent = state.score; });
+      bestEls.forEach(el => { el.textContent = state.best; });
+      speedValue.textContent = state.speed;
+      boardValue.textContent = `${state.board} × ${state.board}`;
+    }
+
+    function placeApple(){
+      let next = randomCell();
+      while(state.snake.some(segment => sameCell(segment, next))){ next = randomCell(); }
+      state.apple = next;
+    }
+
+    function reset(){
+      const mid = center();
+      state.snake = [
+        {x: mid, y: mid},
+        {x: mid - 1, y: mid},
+        {x: mid - 2, y: mid}
+      ];
+      state.direction = {x: 1, y: 0};
+      state.nextDirection = {x: 1, y: 0};
+      state.score = 0;
+      state.gameOver = false;
+      state.accumulator = 0;
+      placeApple();
+      updateText();
       draw();
-      setTimeout(gameLoop, 1000/20);
+    }
+
+    function setRunning(running){
+      if(state.running === running && !(state.gameOver && running)) return;
+      if(state.gameOver && running) reset();
+      state.running = running;
+      overlay.classList.toggle('visible', !running);
+      overlayText.textContent = state.gameOver
+        ? 'Game over! Press Start, Reset, or Space to try again.'
+        : 'Paused. Press Start, Space, or an arrow key to continue.';
+      if(running) requestAnimationFrame(loop);
+    }
+
+    function setDirection(x,y){
+      if(state.direction.x + x === 0 && state.direction.y + y === 0) return;
+      state.nextDirection = {x,y};
+      if(!state.running) setRunning(true);
+    }
+
+    function step(){
+      state.direction = state.nextDirection;
+      const head = state.snake[0];
+      const next = {
+        x: (head.x + state.direction.x + state.board) % state.board,
+        y: (head.y + state.direction.y + state.board) % state.board
+      };
+
+      if(state.snake.some(segment => sameCell(segment, next))){
+        state.gameOver = true;
+        setRunning(false);
+        return;
+      }
+
+      state.snake.unshift(next);
+      if(sameCell(next, state.apple)){
+        state.score += 10;
+        if(state.score > state.best){
+          state.best = state.score;
+          localStorage.setItem('snake-hd-best', state.best);
+        }
+        placeApple();
+      } else {
+        state.snake.pop();
+      }
+      updateText();
+    }
+
+    function drawBackground(size){
+      const gradient = ctx.createRadialGradient(canvas.width*.5, canvas.height*.38, 40, canvas.width*.5, canvas.height*.5, canvas.width*.72);
+      gradient.addColorStop(0, '#0b2442');
+      gradient.addColorStop(1, '#020617');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, .075)';
+      ctx.lineWidth = 1;
+      for(let i = 0; i <= state.board; i++){
+        const p = Math.round(i * size) + .5;
+        ctx.beginPath(); ctx.moveTo(p,0); ctx.lineTo(p,canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,p); ctx.lineTo(canvas.width,p); ctx.stroke();
+      }
+    }
+
+    function roundedCell(x,y,size,radius){
+      const inset = Math.max(2, size * .08);
+      const px = x * size + inset;
+      const py = y * size + inset;
+      const box = size - inset * 2;
+      ctx.beginPath();
+      ctx.roundRect(px, py, box, box, radius);
     }
 
     function draw(){
-      ctx.fillStyle = '#08111a'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      // apple
-      ctx.fillStyle = '#ff4d4d'; ctx.fillRect(appleX*grid, appleY*grid, grid, grid);
-      // snake
-      ctx.fillStyle = '#2ea44f';
-      for(let s of trail) ctx.fillRect(s.x*grid+1, s.y*grid+1, grid-2, grid-2);
-      // grid overlay if small
-      if(grid<=18){ ctx.strokeStyle='rgba(255,255,255,0.02)'; ctx.lineWidth=1; for(let x=0;x<canvas.width;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()} for(let y=0;y<canvas.height;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()} }
+      const size = cellSize();
+      drawBackground(size);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(250,204,21,.85)';
+      ctx.shadowBlur = 28;
+      const appleGradient = ctx.createRadialGradient((state.apple.x+.35)*size,(state.apple.y+.35)*size,size*.05,(state.apple.x+.5)*size,(state.apple.y+.5)*size,size*.48);
+      appleGradient.addColorStop(0, '#fff7ad');
+      appleGradient.addColorStop(.55, '#facc15');
+      appleGradient.addColorStop(1, '#f97316');
+      ctx.fillStyle = appleGradient;
+      roundedCell(state.apple.x, state.apple.y, size, size*.22);
+      ctx.fill();
+      ctx.restore();
+
+      state.snake.forEach((segment, index) => {
+        const isHead = index === 0;
+        const alpha = 1 - (index / Math.max(state.snake.length, 1)) * .46;
+        ctx.save();
+        ctx.shadowColor = isHead ? 'rgba(34,211,238,.85)' : 'rgba(74,222,128,.62)';
+        ctx.shadowBlur = isHead ? 26 : 14;
+        const bodyGradient = ctx.createLinearGradient(segment.x*size, segment.y*size, (segment.x+1)*size, (segment.y+1)*size);
+        bodyGradient.addColorStop(0, isHead ? '#67e8f9' : `rgba(134,239,172,${alpha})`);
+        bodyGradient.addColorStop(1, isHead ? '#22c55e' : `rgba(34,197,94,${alpha})`);
+        ctx.fillStyle = bodyGradient;
+        roundedCell(segment.x, segment.y, size, isHead ? size*.26 : size*.18);
+        ctx.fill();
+        ctx.restore();
+      });
     }
 
-    function reset(){ px=10;py=10;vx=0;vy=0;trail=[];tail=5;placeApple(); draw(); }
+    function loop(timestamp){
+      if(!state.running) return;
+      const delta = Math.min(timestamp - state.lastTime, 160);
+      state.lastTime = timestamp;
+      state.accumulator += delta;
+      const interval = 1000 / state.speed;
+      while(state.accumulator >= interval){
+        step();
+        state.accumulator -= interval;
+        if(!state.running) break;
+      }
+      draw();
+      requestAnimationFrame(loop);
+    }
 
-    document.addEventListener('keydown', e=>{
-      const k = e.key.toLowerCase();
-      if(['arrowup','w'].includes(e.key.toLowerCase())){ vx=0;vy=-1 }
-      if(['arrowdown','s'].includes(e.key.toLowerCase())){ vx=0;vy=1 }
-      if(['arrowleft','a'].includes(e.key.toLowerCase())){ vx=-1;vy=0 }
-      if(['arrowright','d'].includes(e.key.toLowerCase())){ vx=1;vy=0 }
+    document.getElementById('start').addEventListener('click', () => setRunning(true));
+    document.getElementById('pause').addEventListener('click', () => setRunning(false));
+    document.getElementById('reset').addEventListener('click', () => { setRunning(false); reset(); });
+    speedInput.addEventListener('input', event => { state.speed = Number(event.target.value); updateText(); });
+    boardInput.addEventListener('input', event => { state.board = Number(event.target.value); setRunning(false); reset(); });
+
+    document.addEventListener('keydown', event => {
+      const key = event.key.toLowerCase();
+      if(['arrowup','w'].includes(key)) setDirection(0,-1);
+      if(['arrowdown','s'].includes(key)) setDirection(0,1);
+      if(['arrowleft','a'].includes(key)) setDirection(-1,0);
+      if(['arrowright','d'].includes(key)) setDirection(1,0);
+      if(key === ' '){ event.preventDefault(); setRunning(!state.running); }
     });
 
-    startBtn.addEventListener('click', ()=>{ if(!running){ running=true; gameLoop(); } });
-    pauseBtn.addEventListener('click', ()=>{ running=false; });
-    resetBtn.addEventListener('click', ()=>{ running=false; reset(); });
-    speedInput.addEventListener('input', e=>{ speed = parseInt(e.target.value,10); });
-    gridInput.addEventListener('input', e=>{ grid = parseInt(e.target.value,10); });
-    controlsToggle.addEventListener('click', ()=>{ touchArea.style.display = touchArea.style.display==='none' ? 'block' : 'none' });
+    document.querySelector('.touch-pad').addEventListener('click', event => {
+      const button = event.target.closest('button[data-dir]');
+      if(!button) return;
+      const directions = {up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+      setDirection(...directions[button.dataset.dir]);
+    });
 
-    touchArea.addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; const dir = b.dataset.dir; if(dir==='up'){vx=0;vy=-1} if(dir==='down'){vx=0;vy=1} if(dir==='left'){vx=-1;vy=0} if(dir==='right'){vx=1;vy=0} });
-
-    // initial
     reset();
   </script>
 </body>
