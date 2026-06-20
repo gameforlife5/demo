@@ -3,119 +3,414 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Snake Preview — Demo</title>
+  <title>Snake 3210 — Demo</title>
   <style>
-    :root{--bg:#0d1117;--fg:#c9d1d9;--accent:#2ea44f}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);display:flex;gap:20px;align-items:flex-start;padding:24px}
-    .wrap{display:flex;flex-direction:column;gap:12px}
-    canvas{background:#08111a;border:1px solid #222;border-radius:8px}
-    .controls{display:flex;flex-wrap:wrap;gap:8px}
-    .controls button, .controls input[type=range]{background:#0b1220;color:var(--fg);border:1px solid #222;padding:8px;border-radius:6px}
-    .meta{max-width:360px}
-    .hint{opacity:.8;font-size:13px}
+    :root{
+      color-scheme:dark;
+      --page:#151515;
+      --phone:#1f2933;
+      --phone-edge:#0b1117;
+      --bezel:#111820;
+      --lcd:#9aa56b;
+      --lcd-dark:#1e2818;
+      --lcd-faint:rgba(30,40,24,.16);
+      --key:#d6d0c4;
+      --key-dark:#9f988d;
+      --accent:#7dd3fc;
+    }
+    *{box-sizing:border-box}
+    body{
+      min-height:100vh;
+      margin:0;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:
+        radial-gradient(circle at 50% 0%,rgba(125,211,252,.14),transparent 34rem),
+        linear-gradient(135deg,#080808,var(--page));
+      color:#f8fafc;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+    .layout{
+      width:min(1080px,100%);
+      display:grid;
+      grid-template-columns:minmax(310px,440px) minmax(280px,1fr);
+      gap:28px;
+      align-items:center;
+    }
+    .phone{
+      position:relative;
+      width:min(430px,100%);
+      margin:auto;
+      padding:34px 28px 30px;
+      border-radius:42px 42px 58px 58px / 54px 54px 70px 70px;
+      background:
+        linear-gradient(90deg,rgba(255,255,255,.08),transparent 18%,transparent 82%,rgba(0,0,0,.34)),
+        linear-gradient(180deg,#344150,#1d2731 58%,#101820);
+      border:5px solid var(--phone-edge);
+      box-shadow:0 36px 100px rgba(0,0,0,.55), inset 0 2px 8px rgba(255,255,255,.12);
+    }
+    .speaker{
+      width:86px;
+      height:12px;
+      margin:0 auto 24px;
+      border-radius:999px;
+      background:#070b0f;
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.08);
+    }
+    .screen-bezel{
+      padding:18px 18px 16px;
+      border-radius:24px 24px 32px 32px;
+      background:linear-gradient(180deg,#0d141b,#05080b);
+      border:3px solid #020406;
+      box-shadow:inset 0 1px 10px rgba(255,255,255,.08),0 10px 24px rgba(0,0,0,.3);
+    }
+    .brand{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:8px;
+      color:#dbe4ec;
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      opacity:.78;
+    }
+    .lcd-wrap{
+      position:relative;
+      padding:8px;
+      border-radius:8px;
+      background:#76804e;
+      border:2px solid #303820;
+      box-shadow:inset 0 0 22px rgba(0,0,0,.4);
+    }
+    canvas{
+      display:block;
+      width:100%;
+      aspect-ratio:84/48;
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
+      background:var(--lcd);
+    }
+    .softkeys{
+      display:grid;
+      grid-template-columns:1fr 56px 1fr;
+      gap:12px;
+      margin:20px 24px 14px;
+      align-items:center;
+    }
+    .softkey,.navkey,.numkey{
+      border:0;
+      color:#111827;
+      background:linear-gradient(180deg,#f4efe6,var(--key));
+      box-shadow:inset 0 2px rgba(255,255,255,.55), inset 0 -3px rgba(0,0,0,.14), 0 5px 10px rgba(0,0,0,.28);
+      cursor:pointer;
+      font-weight:800;
+      user-select:none;
+    }
+    .softkey{height:34px;border-radius:18px;font-size:12px;text-transform:uppercase}
+    .navkey{height:56px;border-radius:50%;font-size:20px;background:linear-gradient(180deg,#e8e2d8,#aaa397)}
+    .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 18px}
+    .numkey{min-height:42px;border-radius:18px;font-size:18px;line-height:1.05}
+    .numkey small{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;opacity:.72}
+    .numkey:active,.softkey:active,.navkey:active{transform:translateY(2px);box-shadow:inset 0 2px rgba(255,255,255,.3), inset 0 -1px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.24)}
+    .panel{
+      padding:28px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;
+      background:rgba(15,23,42,.72);
+      box-shadow:0 24px 80px rgba(0,0,0,.35);
+    }
+    .panel h1{margin:0 0 10px;font-size:clamp(32px,5vw,58px);line-height:.95}
+    .panel p{color:#cbd5e1;line-height:1.65}
+    .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+    .fact{padding:14px;border-radius:16px;background:rgba(2,6,23,.5);border:1px solid rgba(255,255,255,.08)}
+    .fact small{display:block;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;font-size:11px}.fact strong{font-size:22px}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.controls button{border:1px solid rgba(125,211,252,.45);border-radius:999px;background:rgba(14,165,233,.16);color:#e0f2fe;padding:10px 14px;font-weight:800;cursor:pointer}
+    .note{font-size:13px;color:#94a3b8}.kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#020617;border:1px solid rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;color:#e2e8f0}
+    @media (max-width:860px){body{padding:14px}.layout{grid-template-columns:1fr}.panel{order:-1}.phone{max-width:390px}.keypad{gap:8px}.numkey{min-height:38px}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <canvas id="c" width="480" height="480"></canvas>
-    <div class="controls">
-      <button id="start">Start</button>
-      <button id="pause">Pause</button>
-      <button id="reset">Reset</button>
-      <label class="hint">Speed <input id="speed" type="range" min="1" max="15" value="6"/></label>
-      <label class="hint">Grid <input id="grid" type="range" min="8" max="32" value="16"/></label>
-      <button id="controlsToggle">Toggle Touch Controls</button>
-    </div>
-  </div>
-  <div class="meta">
-    <h2>Preview-friendly controls for Snake</h2>
-    <p class="hint">Use arrow keys or WASD. The touch controls appear when you toggle them — they're large and preview-friendly for demos and screenshots.</p>
-    <p class="hint">This single-file demo is suitable to publish to GitHub Pages at https://Daniel55926.github.io/demo/ (enable Pages -> Source: "main" / "docs" folder if not already set).</p>
-    <div id="touch" style="display:none;margin-top:12px;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button data-dir="up" style="padding:18px 22px;font-size:18px">↑</button>
-        <button data-dir="left" style="padding:18px 22px;font-size:18px">←</button>
-        <button data-dir="down" style="padding:18px 22px;font-size:18px">↓</button>
-        <button data-dir="right" style="padding:18px 22px;font-size:18px">→</button>
+  <main class="layout">
+    <section class="phone" aria-label="Nokia 3210-style phone frame">
+      <div class="speaker" aria-hidden="true"></div>
+      <div class="screen-bezel">
+        <div class="brand"><span>NOKIA</span><span>3210</span></div>
+        <div class="lcd-wrap"><canvas id="screen" width="84" height="48" aria-label="Monochrome Snake game screen"></canvas></div>
       </div>
-    </div>
-  </div>
+      <div class="softkeys">
+        <button class="softkey" id="startBtn">Start</button>
+        <button class="navkey" id="pauseBtn">⏸</button>
+        <button class="softkey" id="resetBtn">Reset</button>
+      </div>
+      <div class="keypad" aria-label="Phone keypad controls">
+        <button class="numkey">1<small></small></button><button class="numkey" data-dir="up">2<small>ABC ↑</small></button><button class="numkey">3<small>DEF</small></button>
+        <button class="numkey" data-dir="left">4<small>GHI ←</small></button><button class="numkey">5<small>JKL</small></button><button class="numkey" data-dir="right">6<small>MNO →</small></button>
+        <button class="numkey">7<small>PQRS</small></button><button class="numkey" data-dir="down">8<small>TUV ↓</small></button><button class="numkey">9<small>WXYZ</small></button>
+        <button class="numkey">*</button><button class="numkey">0<small>MENU</small></button><button class="numkey">#</button>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h1>Snake 3210</h1>
+      <p>This version trades the neon remake for a Nokia 3210-style game: monochrome 84×48 LCD, chunky pixels, no wall wrapping, keypad controls, levels, score, and old-phone pacing.</p>
+      <div class="facts">
+        <div class="fact"><small>Screen</small><strong>84×48</strong></div>
+        <div class="fact"><small>Mode</small><strong>Mono LCD</strong></div>
+        <div class="fact"><small>Score</small><strong id="scoreText">0</strong></div>
+        <div class="fact"><small>Best</small><strong id="bestText">0</strong></div>
+      </div>
+      <p>Use <span class="kbd">2</span><span class="kbd">4</span><span class="kbd">6</span><span class="kbd">8</span>, arrow keys, WASD, or the phone keypad. Press <span class="kbd">Space</span> to pause/resume.</p>
+      <div class="controls"><button id="levelBtn">Level 1</button><button id="soundBtn">Sound On</button></div>
+      <p class="note">This is a faithful browser homage based on the 3210's monochrome 84×48 display and preinstalled Snake, not original Nokia firmware.</p>
+    </aside>
+  </main>
 
   <script>
-    const canvas = document.getElementById('c');
+    const canvas = document.getElementById('screen');
     const ctx = canvas.getContext('2d');
-    let grid = 16;
-    let speed = 6;
-    let px = 10, py = 10;
-    let vx = 0, vy = 0;
-    let trail = [];
-    let tail = 5;
-    let appleX = 15, appleY = 15;
-    let running = false;
-    const startBtn = document.getElementById('start');
-    const pauseBtn = document.getElementById('pause');
-    const resetBtn = document.getElementById('reset');
-    const speedInput = document.getElementById('speed');
-    const gridInput = document.getElementById('grid');
-    const controlsToggle = document.getElementById('controlsToggle');
-    const touchArea = document.getElementById('touch');
+    const scoreText = document.getElementById('scoreText');
+    const bestText = document.getElementById('bestText');
+    const levelBtn = document.getElementById('levelBtn');
+    const soundBtn = document.getElementById('soundBtn');
 
-    function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-    function placeApple(){appleX = rnd(0, (canvas.width/grid)-1); appleY = rnd(0, (canvas.height/grid)-1)}
+    const LCD = '#9aa56b';
+    const INK = '#1e2818';
+    const FAINT = 'rgba(30,40,24,.18)';
+    const CELL = 3;
+    const COLS = 26;
+    const ROWS = 13;
+    const ORIGIN_X = 3;
+    const ORIGIN_Y = 7;
+    const TICK_BY_LEVEL = [190, 170, 150, 130, 112, 96, 82, 70, 60];
 
-    function gameLoop(){
-      if(!running) return;
-      for(let i=0;i<speed;i++){ 
-        px += vx; py += vy;
-        if(px<0) px = canvas.width/grid -1;
-        if(px>canvas.width/grid-1) px = 0;
-        if(py<0) py = canvas.height/grid -1;
-        if(py>canvas.height/grid-1) py = 0;
-        trail.push({x:px,y:py});
-        while(trail.length>tail) trail.shift();
-        for(let t of trail){
-          if(t.x===px && t.y===py && !(t===trail[trail.length-1])){ // collided
-            running=false; break;
-          }
+    const state = {
+      snake: [],
+      food: {x: 18, y: 6},
+      dir: {x: 1, y: 0},
+      nextDir: {x: 1, y: 0},
+      score: 0,
+      best: Number(localStorage.getItem('snake-3210-best') || 0),
+      level: 1,
+      running: false,
+      gameOver: false,
+      sound: true,
+      lastTick: 0,
+      attractBlink: 0
+    };
+
+    function beep(frequency = 660, duration = 55){
+      if(!state.sound || !window.AudioContext && !window.webkitAudioContext) return;
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      const audio = new Audio();
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'square';
+      gain.gain.value = 0.025;
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + duration / 1000);
+    }
+
+    function drawPixelRect(x, y, w, h, fill = INK){
+      ctx.fillStyle = fill;
+      ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    function drawText(text, x, y, align = 'left'){
+      ctx.fillStyle = INK;
+      ctx.font = '5px monospace';
+      ctx.textBaseline = 'top';
+      ctx.textAlign = align;
+      ctx.fillText(text, x, y);
+    }
+
+    function clear(){
+      ctx.fillStyle = LCD;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = FAINT;
+      for(let x = 0; x < canvas.width; x += 2){
+        for(let y = 0; y < canvas.height; y += 2){
+          if((x + y) % 4 === 0) ctx.fillRect(x, y, 1, 1);
         }
-        if(px===appleX && py===appleY){ tail++; placeApple(); }
       }
+    }
+
+    function updateText(){
+      scoreText.textContent = state.score;
+      bestText.textContent = state.best;
+      levelBtn.textContent = `Level ${state.level}`;
+      soundBtn.textContent = state.sound ? 'Sound On' : 'Sound Off';
+    }
+
+    function same(a, b){ return a.x === b.x && a.y === b.y; }
+    function randomFood(){
+      let food = {x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS)};
+      while(state.snake.some(segment => same(segment, food))){
+        food = {x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS)};
+      }
+      state.food = food;
+    }
+
+    function reset(){
+      const midY = Math.floor(ROWS / 2);
+      state.snake = [{x: 7, y: midY}, {x: 6, y: midY}, {x: 5, y: midY}];
+      state.dir = {x: 1, y: 0};
+      state.nextDir = {x: 1, y: 0};
+      state.score = 0;
+      state.running = false;
+      state.gameOver = false;
+      state.lastTick = 0;
+      randomFood();
+      updateText();
       draw();
-      setTimeout(gameLoop, 1000/20);
+    }
+
+    function start(){
+      if(state.gameOver) reset();
+      if(state.running) return;
+      state.running = true;
+      state.lastTick = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function pause(){
+      state.running = !state.running;
+      if(state.running){
+        state.lastTick = performance.now();
+        requestAnimationFrame(loop);
+      } else {
+        draw();
+      }
+    }
+
+    function setDirection(x, y){
+      if(state.dir.x + x === 0 && state.dir.y + y === 0) return;
+      state.nextDir = {x, y};
+      if(!state.running) start();
+    }
+
+    function endGame(){
+      state.gameOver = true;
+      state.running = false;
+      beep(160, 180);
+      draw();
+    }
+
+    function step(){
+      state.dir = state.nextDir;
+      const head = state.snake[0];
+      const next = {x: head.x + state.dir.x, y: head.y + state.dir.y};
+      const hitWall = next.x < 0 || next.x >= COLS || next.y < 0 || next.y >= ROWS;
+      const hitBody = state.snake.some(segment => same(segment, next));
+      if(hitWall || hitBody){ endGame(); return; }
+
+      state.snake.unshift(next);
+      if(same(next, state.food)){
+        state.score += state.level * 5;
+        if(state.score > state.best){
+          state.best = state.score;
+          localStorage.setItem('snake-3210-best', state.best);
+        }
+        beep(880, 45);
+        randomFood();
+      } else {
+        state.snake.pop();
+      }
+      updateText();
+    }
+
+    function drawBorder(){
+      drawPixelRect(0, 0, 84, 6);
+      drawPixelRect(0, 45, 84, 3);
+      drawText(`SCORE ${String(state.score).padStart(4, '0')}`, 2, 1);
+      drawText(`L${state.level}`, 82, 1, 'right');
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ORIGIN_X - 1.5, ORIGIN_Y - 1.5, COLS * CELL + 3, ROWS * CELL + 3);
+    }
+
+    function drawGame(){
+      state.snake.forEach((segment, index) => {
+        const px = ORIGIN_X + segment.x * CELL;
+        const py = ORIGIN_Y + segment.y * CELL;
+        drawPixelRect(px, py, CELL, CELL);
+        if(index === 0) drawPixelRect(px + 1, py + 1, 1, 1, LCD);
+      });
+      const pulse = Math.floor(Date.now() / 220) % 2 === 0;
+      drawPixelRect(ORIGIN_X + state.food.x * CELL, ORIGIN_Y + state.food.y * CELL, CELL, CELL);
+      if(pulse) drawPixelRect(ORIGIN_X + state.food.x * CELL + 1, ORIGIN_Y + state.food.y * CELL + 1, 1, 1, LCD);
+    }
+
+    function drawOverlay(){
+      if(state.gameOver){
+        drawPixelRect(16, 17, 52, 16, LCD);
+        ctx.strokeStyle = INK;
+        ctx.strokeRect(15.5, 16.5, 53, 17);
+        drawText('GAME OVER', 42, 19, 'center');
+        drawText('START', 42, 26, 'center');
+        return;
+      }
+      if(!state.running){
+        const show = Math.floor(Date.now() / 520) % 2 === 0;
+        if(show){
+          drawText('SNAKE', 42, 18, 'center');
+          drawText('PRESS START', 42, 26, 'center');
+        }
+      }
     }
 
     function draw(){
-      ctx.fillStyle = '#08111a'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      // apple
-      ctx.fillStyle = '#ff4d4d'; ctx.fillRect(appleX*grid, appleY*grid, grid, grid);
-      // snake
-      ctx.fillStyle = '#2ea44f';
-      for(let s of trail) ctx.fillRect(s.x*grid+1, s.y*grid+1, grid-2, grid-2);
-      // grid overlay if small
-      if(grid<=18){ ctx.strokeStyle='rgba(255,255,255,0.02)'; ctx.lineWidth=1; for(let x=0;x<canvas.width;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()} for(let y=0;y<canvas.height;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()} }
+      clear();
+      drawBorder();
+      drawGame();
+      drawOverlay();
     }
 
-    function reset(){ px=10;py=10;vx=0;vy=0;trail=[];tail=5;placeApple(); draw(); }
+    function loop(now){
+      if(!state.running) return;
+      if(now - state.lastTick >= TICK_BY_LEVEL[state.level - 1]){
+        step();
+        state.lastTick = now;
+      }
+      draw();
+      requestAnimationFrame(loop);
+    }
 
-    document.addEventListener('keydown', e=>{
-      const k = e.key.toLowerCase();
-      if(['arrowup','w'].includes(e.key.toLowerCase())){ vx=0;vy=-1 }
-      if(['arrowdown','s'].includes(e.key.toLowerCase())){ vx=0;vy=1 }
-      if(['arrowleft','a'].includes(e.key.toLowerCase())){ vx=-1;vy=0 }
-      if(['arrowright','d'].includes(e.key.toLowerCase())){ vx=1;vy=0 }
+    document.getElementById('startBtn').addEventListener('click', start);
+    document.getElementById('pauseBtn').addEventListener('click', pause);
+    document.getElementById('resetBtn').addEventListener('click', reset);
+    levelBtn.addEventListener('click', () => {
+      state.level = state.level === 9 ? 1 : state.level + 1;
+      updateText();
+    });
+    soundBtn.addEventListener('click', () => {
+      state.sound = !state.sound;
+      updateText();
     });
 
-    startBtn.addEventListener('click', ()=>{ if(!running){ running=true; gameLoop(); } });
-    pauseBtn.addEventListener('click', ()=>{ running=false; });
-    resetBtn.addEventListener('click', ()=>{ running=false; reset(); });
-    speedInput.addEventListener('input', e=>{ speed = parseInt(e.target.value,10); });
-    gridInput.addEventListener('input', e=>{ grid = parseInt(e.target.value,10); });
-    controlsToggle.addEventListener('click', ()=>{ touchArea.style.display = touchArea.style.display==='none' ? 'block' : 'none' });
+    document.querySelector('.keypad').addEventListener('click', event => {
+      const button = event.target.closest('[data-dir]');
+      if(!button) return;
+      const directions = {up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0]};
+      setDirection(...directions[button.dataset.dir]);
+    });
 
-    touchArea.addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; const dir = b.dataset.dir; if(dir==='up'){vx=0;vy=-1} if(dir==='down'){vx=0;vy=1} if(dir==='left'){vx=-1;vy=0} if(dir==='right'){vx=1;vy=0} });
+    document.addEventListener('keydown', event => {
+      const key = event.key.toLowerCase();
+      if(['arrowup', 'w', '2'].includes(key)) setDirection(0, -1);
+      if(['arrowdown', 's', '8'].includes(key)) setDirection(0, 1);
+      if(['arrowleft', 'a', '4'].includes(key)) setDirection(-1, 0);
+      if(['arrowright', 'd', '6'].includes(key)) setDirection(1, 0);
+      if(key === ' '){ event.preventDefault(); pause(); }
+      if(key === 'enter') start();
+    });
 
-    // initial
     reset();
+    setInterval(() => { if(!state.running) draw(); }, 250);
   </script>
 </body>
 </html>
